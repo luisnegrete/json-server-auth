@@ -1,0 +1,60 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "email": "standard_user@sauce.com",
+      "password": "secret_sauce",
+      "name": "Standard User"
+    },
+    {
+      "id": 2,
+      "email": "locked_out_user@sauce.com",
+      "password": "secret_sauce",
+      "name": "Locked Out User",
+      "status": "locked"
+    }
+  ],
+  "products": [
+    {
+      "id": 1,
+      "name": "Sauce Labs Backpack",
+      "description": "carry.all.the.things()",
+      "price": 29.99,
+      "inventory": 10
+    },
+    {
+      "id": 2,
+      "name": "Sauce Labs Bike Light",
+      "description": "A light for your bike.",
+      "price": 9.99,
+      "inventory": 5
+    },
+    {
+      "name": "Sauce Labs Bolt T-Shirt",
+      "description": "Get your testing superhero on with the Sauce Labs bolt T-shirt. From American Apparel, 100% ringspun combed cotton, heather gray with red bolt.",
+      "price": 15.99,
+      "inventory": 6,
+      "id": 3
+    }
+  ],
+  "orders": [
+    {
+      "userId": 1,
+      "items": [
+        {
+          "productId": 1,
+          "quantity": 1,
+          "price": 29.99
+        }
+      ],
+      "shippingAddress": {
+        "firstName": "John",
+        "lastName": "Doe",
+        "zipCode": "90210"
+      },
+      "totalAmount": 29.99,
+      "status": "Processing",
+      "id": 1
+    }
+  ]
+}

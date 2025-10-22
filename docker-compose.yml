@@ -1,0 +1,10 @@
+services:
+  json-server:
+    build: .
+    container_name: mock-json-server
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/usr/src/app
+    environment:
+      - NODE_ENV=development
