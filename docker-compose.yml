@@ -1,10 +1,29 @@
+version: "3.8"
 services:
   json-server:
     build: .
+    image: mock-json-server:latest
     container_name: mock-json-server
     ports:
       - "3000:3000"
     volumes:
-      - .:/usr/src/app
+      - .:/usr/src/app:delegated
+      - /usr/src/app/node_modules
+    env_file:
+      - .env
     environment:
       - NODE_ENV=development
+      - JWT_SECRET=${JWT_SECRET}
+      - BCRYPT_SALT_ROUNDS=${BCRYPT_SALT_ROUNDS:-10}
+    restart: unless-stopped
+
+  migrate:
+    image: mock-json-server:latest
+    depends_on:
+      - json-server
+    entrypoint: ["node", "scripts/hash-passwords.js"]
+    environment:
+      - BCRYPT_SALT_ROUNDS=${BCRYPT_SALT_ROUNDS:-10}
+    volumes:
+      - .:/usr/src/app:delegated
+      - /usr/src/app/node_modules

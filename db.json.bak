@@ -3,13 +3,13 @@
     {
       "id": 1,
       "email": "standard_user@sauce.com",
-      "password": "$2b$10$MjKH7icb419rg0gtYHcp8.CANDMORcbFenxrWNYar7iHYmT9NY8nq",
+      "password": "secret_sauce",
       "name": "Standard User"
     },
     {
       "id": 2,
       "email": "locked_out_user@sauce.com",
-      "password": "$2b$10$QbkuxTNOMfzIOIbKb42mmuTseA.URTstTcNcdiP0vdJAcmK/7E8le",
+      "password": "secret_sauce",
       "name": "Locked Out User",
       "status": "locked"
     }

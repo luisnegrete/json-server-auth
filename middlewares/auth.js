@@ -1,9 +1,9 @@
 const jwt = require('jsonwebtoken');
 
-const SECRET_KEY = process.env.JWT_SECRET || 'tu-secreto-super-seguro-de-prueba'; // use env in production
+const SECRET_KEY = process.env.JWT_SECRET || 'tu-secreto-super-seguro-de-prueba'; // usar env en producción
 
 module.exports = (req, res, next) => {
-  // Public routes and allowed methods
+  // Rutas públicas y métodos permitidos
   const publicRoutes = [
     { path: '/login', methods: ['POST'] },
     { path: '/register', methods: ['POST'] }
@@ -21,11 +21,11 @@ module.exports = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, SECRET_KEY);
-    // Attach decoded payload for downstream handlers
+    // Adjuntar payload decodificado para uso posterior
     req.user = decoded;
     return next();
   } catch (err) {
-    if (err && err.name === 'TokenExpiredError') {
+    if (err.name === 'TokenExpiredError') {
       return res.status(401).json({ message: 'Unauthorized: Token expired' });
     }
     return res.status(401).json({ message: 'Unauthorized: Invalid token' });
