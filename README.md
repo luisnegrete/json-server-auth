@@ -1,101 +1,164 @@
-# **json-server-auth: API Mock con Autenticación JWT y Validación**
+// ...existing code...
 
-Este proyecto crea una API RESTful simulada utilizando json-server que implementa flujos de Autenticación (JWT) y Validación de Datos (Middleware). Es ideal para crear un backend de prueba realista y aislado para suites de automatización de pruebas de API.
+# json-server-auth — API mock con autenticación JWT y validación
 
-## **Arquitectura del Proyecto**
+Este proyecto expone un mock HTTP REST (json-server) ampliado con middlewares para:
 
-El servidor se ejecuta en un contenedor Docker y utiliza middlewares de Node.js/Express para interceptar y procesar peticiones antes de que lleguen al router de <em>json-server</em>.
-Estructura de Directorios:
+- Autenticación JWT (verificación en middleware).
+- Validaciones de payload (productos y órdenes).
+- Soporte para contraseñas hasheadas (bcrypt) y script de migración.
+- Empaquetado y ejecución vía Docker / docker-compose.
 
-<code>json-server-auth/
-│
-├── middlewares/
-│ ├── auth.js         <-- Lógica para verificar el JWT.
-│ └── validation.js   <-- Lógica para validar campos (ej: price en /products).
-│
-├── docker-compose.yml  <-- Orquestación y mapeo de puertos.
-├── Dockerfile          <-- Define el entorno Node.js para el servidor.
-├── package.json        <-- Dependencias (json-server, jsonwebtoken, body-parser).
-├── server.js           <-- Punto de entrada: Conecta JWT Login, Middlewares y Router.
-└── db.json             <-- Base de datos simulada (datos de users, products, orders).
-</code>
+## Estructura principal
 
-## **Inicio Rápido con Docker**
+json-server-auth/
 
-Asegúrate de tener Docker y Docker Compose instalados.
+- middlewares/
+  - auth.js — verifica y descifra JWT; adjunta req.user
+  - validation.js — valida POST /products y POST /orders
+- scripts/
+  - hash-passwords.js — lee db.json y convierte passwords a bcrypt
+- Dockerfile
+- docker-compose.yml
+- server.js — arranque, rutas personalizadas (login), middlewares y router json-server
+- db.json — base de datos simulada (users, products, orders)
+- .env / .env.example
 
-1. Construir e Iniciar el Contenedor
-Desde el directorio raíz del proyecto:
+## Variables de entorno (relevantes)
 
-<code>docker-compose up --build</code>
+Lectura desde .env (o docker-compose env_file). Valores presentes en el repo:
 
-El servidor estará disponible en <code>http://localhost:3000</code>.
+- JWT_SECRET — secreto para firmar/verificar tokens (requerido).
+- BCRYPT_SALT_ROUNDS — rounds para bcrypt (por defecto 10).
+- PORT — puerto de la app (por defecto 3000).
+- MIGRATE_ON_START — (indica intención de migración; el script existe bajo scripts/).
+- RATE*LIMIT*\* — variables disponibles en .env, no todas están aplicadas por defecto en server.js.
 
-2. Comandos Útiles
+Nota: el tiempo de expiración del token está definido en server.js como '1m' (1 minuto). Cambiarlo requiere editar server.js.
 
+## Inicio rápido
 
-| Comando                             | Descripción                                         |
-|-|-|
-| <code>docker-compose up -d</code>                | Inicia el contenedor en segundo plano.              |
-| <code>docker-compose stop</code>                 | Detiene el contenedor sin eliminar los datos.       |
-| <code>docker-compose down</code>                 | Detiene y elimina el contenedor y la red.           |
-| <code>docker exec -it mock-json-server sh</code> | Accede a la terminal del contenedor para depuración.|
+Con Docker (recomendado):
 
-## **Servicios de API Disponibles**
+- Construir y levantar:
+  docker-compose up --build
+- Levantar en background:
+  docker-compose up -d
+- Ejecutar el seeder de hashing (migrate service incluido en docker-compose):
+  docker-compose run --rm migrate
 
-La URL base para todos los servicios es http://localhost:3000.
+Localmente:
 
-Flujo de Autenticación (JWT)
+- Instalar dependencias:
+  npm install
+- Ejecutar:
+  npm start
+- Modo desarrollo (si tienes nodemon):
+  npm run dev
 
-| Endpoint | Método | Propósito | Headers | Body (JSON) |
-|-|-|-|-|-|
-| /login | POST | Genera un Token JWT si las credenciales son válidas. | Content-Type: application/json | {"email": "admin@example.com", "password": "123456"} |
+Para migrar passwords del db.json a hashes:
 
-## **Endpoints Protegidos (Catálogo y Órdenes)**
+- Hacer backup de db.json
+- Ejecutar:
+  npm run hash-passwords
+  o usar el servicio `migrate` en docker-compose.
 
-Todos los servicios a <code>/products</code>  y <code>/orders</code> requieren el Header Authorization: Bearer <code>\<token\></code> obtenido del <code>/login.</code>
+## Endpoints principales
 
-| Endpoint | Método | Función | Headers Requeridos | 
-|-|-|-|-| 
-| <code>/products</code> | <code>GET</code> | Obtiene el catálogo de productos. | Authorization: Bearer <code>\<token\></code> |
-| <code>/products</code> | <code>POST</code> | Crea un nuevo producto. | Authorization: Bearer <code>\<token\></code> |
-| <code>/products/:id</code> | <code>PUT/PATCH/DELETE</code> | Actualiza o elimina un producto específico. | Authorization: Bearer <code>\<token\></code> |
-| <code>/orders</code> | <code>POST</code> | Crea una nueva orden (Checkout). | Authorization: Bearer <code>\<token\></code> |
-| <code>/orders/:id</code> | <code>GET/PUT/DELETE</code> | Interactúa con una orden específica. | Authorization: Bearer <code>\<token\></code> |
+Base URL: http://localhost:3000
 
-## **Lógica de Middlewares (Pruebas de Automatización)**
+Rutas públicas:
 
-1. Autenticación (JWT)
-- Implementación: Archivo <code>middlewares/auth.js</code>.
-- Comportamiento:
-  - Si el Header <code>Authorization: Bearer \<token\></code> falta o el token es inválido/expirado, el servidor devuelve <code>401 Unauthorized</code>.
-  - La única ruta exenta de esta regla es <code>POST /login</code>.
-  
-2. Validación de Productos
-- Implementación: Archivos <code>middlewares/validation.js</code> y <code>server.js</code>.
-- Comportamiento:
-  - La validación se aplica a <code>POST /products</code>.
-  - Se requiere que los campos <code>name</code> y <code>price</code> estén presentes.
-  - El campo <code>price</code> debe ser un número positivo (entero o flotante).
-  - Si la validación falla, el servidor devuelve <code>400 Bad Request</code>.
+- POST /login
+  - Body JSON: { "email": "...", "password": "..." }
+  - Respuesta exitosa: { "token": "<jwt>" } (nota: la propiedad se llama token)
+  - El login soporta comparar contra passwords en claro o hashed (bcrypt). Compatible con db.json provisto.
 
-## **Flujo Típico de Pruebas de API**
+Rutas protegidas (requieren header Authorization: Bearer <token>):
 
-Para automatizar las pruebas contra este mock de API, el flujo siempre debe seguir esta secuencia:
+- /products
+  - GET — listar productos (autenticación requerida)
+  - POST — crear producto (autenticación requerida + validación)
+- /products/:id
+  - PUT/PATCH/DELETE — operaciones protegidas por JWT
+- /orders
+  - POST — crear orden (autenticación requerida + validación)
+- /orders/:id
+  - GET/PUT/DELETE — protegidas por JWT
 
-1. *Login*: Ejecutar <code>POST /login</code> y guardar el <code>token</code> de la respuesta (ej., en una variable de entorno <code>{{authToken}}</code> en Bruno).
-2. *Uso Protegido*: Ejecutar cualquier otra petición (<code>GET /products</code>, <code>POST /orders</code>, etc.), pasando siempre el valor <code>Bearer {{authToken}}</code> en el _Header_ <code>Authorization</code>.
-3. *Pruebas de Fallo*: Verificar que las peticiones con token inválido devuelvan <code>401</code> y que las peticiones <code>POST /products</code> con datos malos devuelvan <code>400</code>.
+Nota: auth.js considera públicas las rutas POST /login y POST /register (aunque no hay implementación de /register en el repo por defecto).
 
+## Validaciones aplicadas
 
+middleware: middlewares/validation.js
 
+- POST /products
 
+  - name: requerido y no vacío
+  - price: requerido, número positivo (entero o decimal)
+  - Si falla, se devuelve 400 con mensaje explicativo.
 
+- POST /orders
+  - userId: requerido
+  - items: array no vacío; cada item debe tener productId, quantity (>0) y price (>0)
+  - totalAmount: requerido > 0 y se verifica que coincida con la suma items (tolerancia 0.01)
+  - Errores devuelven 400 con descripción.
 
+## Autenticación / Seguridad
 
+middleware: middlewares/auth.js
 
+- Espera header Authorization: Bearer <token>.
+- Verifica token con JWT_SECRET (desde env).
+- Al decodificar agrega req.user con el payload.
+- Si falta/expira/ es inválido devuelve 401 (o 403 para usuarios marcados como locked en login).
 
+Login (server.js)
 
+- Lee usuarios desde db.json y busca por email.
+- Si user.status === 'locked' -> devuelve 403.
+- Si la password almacenada parece un hash bcrypt (prefijos $2a$/$2b$/$2y$) usa bcrypt.compare; en caso contrario compara texto plano (comportamiento para facilitar migración).
+- Respuesta: { "token": "<jwt>" } (token firmado con JWT_SECRET). TTL en código = '1m'.
 
+## Hasheo de contraseñas
 
+- Script: scripts/hash-passwords.js
+- Uso recomendado antes de publicar: respaldar db.json y ejecutar npm run hash-passwords para reemplazar passwords en claro por hashes bcrypt.
+- docker-compose incluye servicio `migrate` que ejecuta el script si deseas usarlo vía contenedor.
 
+## Docker / Healthcheck
+
+- Dockerfile incluye HEALTHCHECK que solicita http://localhost:3000/.
+- docker-compose monta el repo en el contenedor y expone 3000:3000.
+
+## Ejemplos rápidos (curl)
+
+1. Login
+   curl -X POST http://localhost:3000/login \
+    -H "Content-Type: application/json" \
+    -d '{"email":"standard_user@sauce.com","password":"secret_sauce"}'
+
+Respuesta esperada:
+{ "token": "<jwt>" }
+
+2. Obtener productos (con token)
+   curl -H "Authorization: Bearer <token>" http://localhost:3000/products
+
+3. Crear producto (validación aplicada)
+   curl -X POST http://localhost:3000/products \
+    -H "Authorization: Bearer <token>" \
+    -H "Content-Type: application/json" \
+    -d '{"name":"Nuevo Producto","price":19.99,"inventory":5}'
+
+## Notas para integración de pruebas
+
+- Guardar el token devuelto por /login y usarlo en Authorization: Bearer <token>.
+- Verificar respuestas 401 para tokens inválidos/expirados.
+- Verificar respuestas 403 para usuarios con status locked.
+- Verificar respuestas 400 para payloads inválidos en POST /products y POST /orders.
+
+## Qué revisar / posibles mejoras futuras
+
+- Exponer expiración de token mediante variable de entorno (actualmente hardcodeada en server.js).
+- Implementar control de rate-limit y CORS si se requiere (hay variables RATE*LIMIT*\* en .env como pista de configuración).
+- Implementar endpoints de registro (/register) y roles/permiso por usuario (ej. role: admin) si necesitas control de acceso por rol.
