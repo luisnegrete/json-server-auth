@@ -130,6 +130,8 @@ Login (server.js)
 
 - Dockerfile incluye HEALTHCHECK que solicita http://localhost:3000/.
 - docker-compose monta el repo en el contenedor y expone 3000:3000.
+- Comando para construir el contenedor: docker-compose run --rm -e BCRYPT_SALT_ROUNDS=10 json-server sh -c "npm install && node scripts/hash-passwords.js"
+- Comando para levantar el contenedor: docker-compose up -d
 
 ## Ejemplos rápidos (curl)
 
