@@ -31,10 +31,10 @@ Lectura desde .env (o docker-compose env_file). Valores presentes en el repo:
 - JWT_SECRET — secreto para firmar/verificar tokens (requerido).
 - BCRYPT_SALT_ROUNDS — rounds para bcrypt (por defecto 10).
 - PORT — puerto de la app (por defecto 3000).
-- MIGRATE_ON_START — (indica intención de migración; el script existe bajo scripts/).
-- RATE*LIMIT*\* — variables disponibles en .env, no todas están aplicadas por defecto en server.js.
-
-Nota: el tiempo de expiración del token está definido en server.js como '1m' (1 minuto). Cambiarlo requiere editar server.js.
+- MIGRATE_ON_START — si es 'true', ejecuta la migración de contraseñas al iniciar.
+- DB_FILE — archivo de base de datos (por defecto db.json).
+- JWT_EXPIRES_IN — tiempo de expiración del token (por defecto '1m').
+- RATE*LIMIT*\* — variables disponibles en .env, pero **NO** están aplicadas por defecto en server.js (requiere implementación adicional).
 
 ## Inicio rápido
 
